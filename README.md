@@ -8,6 +8,6 @@ Currently base project to understand more about the internals of Nintendo Switch
 4. `make`
 
 ## Credits
-[https://github.com/WerWolv/EdiZon/](EdiZon) - Used to quickly see which functions are critical to reading save file information because official libnx documentation is lacking.
+(https://github.com/WerWolv/EdiZon/)[EdiZon] - Used to quickly see which functions are critical to reading save file information because official libnx documentation is lacking.
 
-[https://github.com/switchbrew/switch-examples](libnx examples) - Used as a quickstart base for application.
+(https://github.com/switchbrew/switch-examples)[libnx examples] - Used as a quickstart base for application.
