@@ -16,6 +16,10 @@ void dumpSaveFiles()
     NsApplicationControlData* applicationControlData;
     u64 realApplicationControlDataSize = 0;
     NacpLanguageEntry* applicationLanguageEntry;
+    FsFileSystem saveDataFileSystem;
+    FsDir saveDataRootDir;
+    FsDirectoryEntry saveDataRootEntry;
+    s64 saveDataRootDirEntries;
 
     outFile = fopen("sdmc:/savedump.txt", "w");
 
@@ -32,16 +36,13 @@ void dumpSaveFiles()
     {
         applicationControlData = (NsApplicationControlData*)malloc(sizeof(NsApplicationControlData));
         memset(applicationControlData, 0, sizeof(NsApplicationControlData));
+        memset(&saveDataFileSystem, 0, sizeof(FsFileSystem));
         result = nsGetApplicationControlData(NsApplicationControlSource_Storage, buf.application_id, applicationControlData, 
                                                 sizeof(NsApplicationControlData), &realApplicationControlDataSize);
         if (R_FAILED(result))
         {
             printf("Failed to read application control data for application id %lX->%lu\n", buf.application_id, (unsigned long)R_DESCRIPTION(result));
             continue;
-        }
-        else
-        {
-            printf("Successfully read application control data for application id %lX\n", buf.application_id);
         }
         
 
@@ -52,9 +53,33 @@ void dumpSaveFiles()
             continue;
         }
         printf("%s\n", applicationLanguageEntry->name);
-        fprintf(outFile, "Name: %s\nApplication Id: %lu\nSave Image Size: %lu\nSave Data Id: %lu\nSave Data Type: %d\nSave Data Index: %d\n\n",
-                applicationLanguageEntry->name, buf.application_id, buf.size, buf.save_data_id, buf.save_data_type, buf.save_data_index);
+        fprintf(outFile, "Name: %s\nApplication Id: %lu\nSave Image Size: %lu\nSave Data Id: %lu\nSave Data Type: %d\nSave Data Index: %d\nSave Data Space Id: %d\nSystem Save Data Id: %lu\n",
+                applicationLanguageEntry->name, buf.application_id, buf.size, buf.save_data_id, buf.save_data_type, buf.save_data_index, buf.save_data_space_id, buf.system_save_data_id);
+
         free(applicationControlData);
+        // output all files
+        result = fsOpen_SaveData(&saveDataFileSystem, buf.application_id, buf.uid);
+        if (R_FAILED(result))
+        {
+            fprintf(outFile, "Failed to open save data file system for application id %lX->%u\n\n", buf.application_id, R_DESCRIPTION(result));
+            continue;
+        }
+        result = fsFsOpenDirectory(&saveDataFileSystem, "/",  FsDirOpenMode_ReadFiles, &saveDataRootDir);
+        if (R_FAILED(result))
+        {
+            fprintf(outFile, "Failed to open root directory of save data file system for applicaiton id %lX\n\n", buf.application_id);
+            continue;
+        }
+        fprintf(outFile, "Root save directory listing: { ");
+        while (R_SUCCEEDED(result = fsDirRead(&saveDataRootDir, &saveDataRootDirEntries, 1, &saveDataRootEntry)) && saveDataRootDirEntries > 0)
+        {
+            printf("File: %s\n", saveDataRootEntry.name);
+            fprintf(outFile, "%s, ", saveDataRootEntry.name);
+        }
+        
+        fprintf(outFile, " }\n");
+
+        fprintf(outFile, "\n");
     }
 
     fflush(outFile);
