@@ -5,6 +5,7 @@
 
 // Include the main libnx system header, for Switch development
 #include <switch.h>
+#include <savedata.h>
 
 void dumpSaveFiles()
 {
